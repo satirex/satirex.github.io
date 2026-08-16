@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "Nahversorgung Hamburg – Supermärkte & Tankstellen",
+  "short_name": "HH Nahversorgung",
+  "description": "Interaktive Karte mit Supermärkten und Tankstellen in Hamburg. Live-Daten, offline-fähig, installierbar.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0B2545",
+  "theme_color": "#0B2545",
+  "lang": "de",
+  "dir": "ltr",
+  "categories": ["navigation", "utilities", "shopping"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nächste Tankstelle",
+      "short_name": "Tankstelle",
+      "url": "./index.html?filter=fuel",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Nächster Supermarkt",
+      "short_name": "Supermarkt",
+      "url": "./index.html?filter=supermarket",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

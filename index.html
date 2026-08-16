@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>Hamburg Nahversorgung – Supermärkte &amp; Tankstellen</title>
+  <meta name="description" content="Finde Supermärkte und Tankstellen in Hamburg auf einer interaktiven Karte – live, offline-fähig, installierbar." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0B2545" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#061B2C" media="(prefers-color-scheme: dark)" />
+
+  <!-- iOS home screen support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="HH Nahversorgung" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" href="icons/favicon.png" />
+
+  <!-- Leaflet (map engine) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+
+  <link rel="preconnect" href="https://tile.openstreetmap.org" />
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <!-- App shell -->
+  <div id="app">
+
+    <!-- Top bar: search + status -->
+    <header class="topbar" id="topbar">
+      <div class="topbar__search">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm8 16-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="search-input" type="search" inputmode="search" enterkeyhint="search"
+               placeholder="Adresse oder Stadtteil suchen …" autocomplete="off" />
+        <button id="search-clear" class="icon-btn" hidden aria-label="Suche löschen">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div id="status-pill" class="status-pill" hidden></div>
+    </header>
+
+    <ul id="search-results" class="search-results" hidden></ul>
+
+    <!-- Filter chips -->
+    <nav class="chipbar" id="chipbar" aria-label="Kategoriefilter">
+      <button class="chip chip--supermarket is-active" data-filter="supermarket">
+        <span class="chip__dot chip__dot--supermarket"></span>Supermärkte
+      </button>
+      <button class="chip chip--fuel is-active" data-filter="fuel">
+        <span class="chip__dot chip__dot--fuel"></span>Tankstellen
+      </button>
+      <button class="chip chip--open" data-filter="open-now">Jetzt geöffnet</button>
+    </nav>
+
+    <!-- Map -->
+    <main id="map" role="application" aria-label="Karte von Hamburg mit Supermärkten und Tankstellen"></main>
+
+    <!-- Floating action buttons -->
+    <div class="fabs">
+      <button id="fab-locate" class="fab" aria-label="Meinen Standort anzeigen">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button id="fab-list" class="fab fab--secondary" aria-label="Liste anzeigen">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Bottom sheet: list / detail -->
+    <section id="sheet" class="sheet" data-state="peek">
+      <div class="sheet__grabber" id="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet__header">
+        <h2 id="sheet-title">In der Nähe</h2>
+        <span id="sheet-count" class="sheet__count"></span>
+      </div>
+      <div id="sheet-body" class="sheet__body">
+        <!-- populated by ui.js -->
+      </div>
+    </section>
+
+    <!-- Onboarding / permission prompt -->
+    <div id="onboarding" class="onboarding" hidden>
+      <div class="onboarding__card">
+        <div class="onboarding__mark" aria-hidden="true"></div>
+        <h1>Nahversorgung Hamburg</h1>
+        <p>Supermärkte und Tankstellen in ganz Hamburg – live von OpenStreetMap, auch offline als zuletzt geladene Karte verfügbar.</p>
+        <button id="onboarding-start" class="btn btn--primary">Karte öffnen</button>
+        <button id="onboarding-locate" class="btn btn--ghost">Standort verwenden</button>
+      </div>
+    </div>
+
+    <!-- Install prompt banner (Android/Chrome) -->
+    <div id="install-banner" class="install-banner" hidden>
+      <span>App installieren für den schnellen Zugriff vom Startbildschirm.</span>
+      <div class="install-banner__actions">
+        <button id="install-dismiss" class="btn btn--ghost btn--small">Später</button>
+        <button id="install-accept" class="btn btn--primary btn--small">Installieren</button>
+      </div>
+    </div>
+
+    <!-- iOS "Zum Home-Bildschirm" hint -->
+    <div id="ios-install-hint" class="install-banner" hidden>
+      <span>Installieren: Teilen-Symbol <strong>⬆️</strong> antippen, dann „Zum Home-Bildschirm“.</span>
+      <div class="install-banner__actions">
+        <button id="ios-hint-dismiss" class="btn btn--ghost btn--small">Ok</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
