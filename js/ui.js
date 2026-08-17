@@ -19,6 +19,7 @@ export class Sheet {
     this.state = "peek";
     this._bindDrag();
     this._bindToggle();
+    this._updateFabOffset();
   }
 
   _bindToggle() {
@@ -39,7 +40,15 @@ export class Sheet {
   setState(state) {
     this.state = state;
     this.el.dataset.state = state;
+    this._updateFabOffset();
     this.onStateChange?.(state);
+  }
+
+  _updateFabOffset() {
+    const h = this.el.getBoundingClientRect().height;
+    const translateByState = { full: 0, half: h * 0.38, peek: h - 128 - this._safeBottom() };
+    const visible = h - (translateByState[this.state] ?? translateByState.peek);
+    document.documentElement.style.setProperty("--sheet-offset", `${Math.round(visible)}px`);
   }
 
   _bindDrag() {
