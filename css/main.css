@@ -46,6 +46,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --topbar-h: 60px;
   --chipbar-h: 44px;
+   --sheet-offset: 128px;
 }
 
 @media (prefers-color-scheme: dark) {
