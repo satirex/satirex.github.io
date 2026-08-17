@@ -14,9 +14,26 @@ export class Sheet {
     this.grabber = $("#sheet-grabber");
     this.header = this.el.querySelector(".sheet__header");
     this.body = $("#sheet-body");
+    this.toggleBtn = $("#sheet-toggle");
     this.onStateChange = onStateChange;
     this.state = "peek";
     this._bindDrag();
+    this._bindToggle();
+  }
+
+  _bindToggle() {
+    // Explizite Steuerung für Nutzer ohne Touch/Wischgeste (Desktop):
+    // ein Klick auf den Pfeil-Button oder den Grabber selbst (ohne Ziehen)
+    // wechselt zwischen "minimiert" (peek) und "erweitert" (half).
+    const toggle = () => {
+      if (this._suppressClick) {
+        this._suppressClick = false;
+        return;
+      }
+      this.setState(this.state === "peek" ? "half" : "peek");
+    };
+    this.toggleBtn?.addEventListener("click", toggle);
+    this.grabber.addEventListener("click", toggle);
   }
 
   setState(state) {
@@ -80,6 +97,9 @@ export class Sheet {
         else if (delta > 0 && this.state === "full") nearest = "half";
         else if (delta > 0 && this.state === "half") nearest = "peek";
       }
+      // Verhindert, dass der nach dem Loslassen synthetisch ausgelöste
+      // "click" das Ergebnis des Ziehens sofort wieder umschaltet.
+      if (Math.abs(delta) > 5) this._suppressClick = true;
       this.el.style.transform = "";
       this.setState(nearest);
     };
