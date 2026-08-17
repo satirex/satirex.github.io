@@ -5,6 +5,7 @@
 import { CATEGORIES } from "./config.js";
 import { formatDistance, distanceMeters } from "./geolocation.js";
 import { isOpenNow } from "./overpass.js";
+import { isOpenNow, humanizeOpeningHours } from "./overpass.js";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -226,9 +227,9 @@ export function renderDetail({ poi, userPos, onBack }) {
           <div class="detail__fact-label">Entfernung</div>
           <div class="detail__fact-value">${dist != null ? formatDistance(dist) : "—"}</div>
         </div>
-        <div class="detail__fact">
+       <div class="detail__fact">
           <div class="detail__fact-label">Öffnungszeiten</div>
-          <div class="detail__fact-value">${poi.openingHours ? escapeHtml(poi.openingHours) : "—"}</div>
+          <div class="detail__fact-value">${poi.openingHours ? escapeHtml(humanizeOpeningHours(poi.openingHours)) : "—"}</div>
         </div>
         <div class="detail__fact">
           <div class="detail__fact-label">${poi.category === "fuel" ? "Kraftstoffe" : "Marke"}</div>
