@@ -73,6 +73,17 @@ export class Sheet {
       const next = Math.min(Math.max(startTranslate + delta, 0), h);
       this.el.style.transform = `translateY(${next}px)`;
     };
+
+    // touchmove muss preventDefault() aufrufen dürfen (daher passive:false),
+    // sonst behandeln mobile Browser (Chrome/Firefox auf Android ebenso wie
+    // Safari auf iOS) die vertikale Geste zusätzlich als Seiten-Scroll und
+    // blenden dabei ihre eigene Adressleiste ein/aus – dadurch "rutscht"
+    // kurzzeitig unsere fixe Such-/Filterleiste ins Bild.
+    const onTouchMove = (e) => {
+      if (!dragging) return;
+      e.preventDefault();
+      onMove(e.touches[0].clientY);
+    };
     const onEnd = (clientY) => {
       if (!dragging) return;
       dragging = false;
@@ -105,10 +116,10 @@ export class Sheet {
     };
 
     this.grabber.addEventListener("touchstart", (e) => onStart(e.touches[0].clientY), { passive: true });
-    this.grabber.addEventListener("touchmove", (e) => onMove(e.touches[0].clientY), { passive: true });
+    this.grabber.addEventListener("touchmove", onTouchMove, { passive: false });
     this.grabber.addEventListener("touchend", (e) => onEnd(e.changedTouches[0].clientY));
     this.header.addEventListener("touchstart", (e) => onStart(e.touches[0].clientY), { passive: true });
-    this.header.addEventListener("touchmove", (e) => onMove(e.touches[0].clientY), { passive: true });
+    this.header.addEventListener("touchmove", onTouchMove, { passive: false });
     this.header.addEventListener("touchend", (e) => onEnd(e.changedTouches[0].clientY));
 
     // Desktop/Maus-Fallback (praktisch beim Testen im Browser)
