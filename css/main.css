@@ -609,3 +609,8 @@ input { font-family: inherit; }
 @media (max-width: 340px) {
   .chip { padding: 7px 11px; font-size: 12.5px; }
 }
+
+.onboarding[hidden],
+.install-banner[hidden] {
+  display: none;
+}
