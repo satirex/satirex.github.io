@@ -55,6 +55,14 @@ function normalize(el) {
   const tags = el.tags || {};
   const category = classify(tags);
   if (!category) return null;
+
+  // Betriebs-/Werkstankstellen und ähnliche nicht-öffentliche Orte
+  // (z. B. private Diesel-Zapfsäulen von Speditionen, Flughafen-interne
+  // Betankung) sind zwar in OSM als amenity=fuel/shop=* erfasst, aber für
+  // eine "wo tanke ich als Privatperson"-App nicht relevant.
+  const NON_PUBLIC_ACCESS = new Set(["private", "no", "customers"]);
+  if (NON_PUBLIC_ACCESS.has(tags.access)) return null;
+
   const lat = el.lat ?? el.center?.lat;
   const lon = el.lon ?? el.center?.lon;
   if (lat == null || lon == null) return null;
