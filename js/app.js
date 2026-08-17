@@ -73,7 +73,7 @@ async function loadForBbox(bbox) {
     renderSheetForView();
   } catch (err) {
     console.warn("Overpass-Fehler", err);
-    setStatusPill("Offline", "offline");
+    setStatusPill("Kartendaten nicht erreichbar", "offline");
     setTimeout(() => setStatusPill(null), 4000);
   }
 }
