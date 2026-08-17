@@ -140,6 +140,27 @@ export async function fetchPois(bbox) {
 
 const DAY_CODES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
+const DAY_DE = { Mo: "Mo", Tu: "Di", We: "Mi", Th: "Do", Fr: "Fr", Sa: "Sa", Su: "So" };
+
+export function humanizeOpeningHours(value) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (trimmed === "24/7") return "Durchgehend geöffnet";
+
+  return trimmed
+    .split(";")
+    .map((rule) => rule.trim())
+    .filter(Boolean)
+    .map((rule) =>
+      rule
+        .replace(/\b(Mo|Tu|We|Th|Fr|Sa|Su)\b/g, (m) => DAY_DE[m])
+        .replace(/\bPH\b/g, "Feiertags")
+        .replace(/\bSH\b/g, "Ferien")
+        .replace(/\boff\b/g, "geschlossen")
+    )
+    .join("; ");
+}
+
 function expandDayRange(token) {
   // "Mo-Fr" -> ["Mo","Tu","We","Th","Fr"], "Sa" -> ["Sa"], "Mo,We,Fr" handled by caller split
   const m = token.match(/^(Mo|Tu|We|Th|Fr|Sa|Su)(?:-(Mo|Tu|We|Th|Fr|Sa|Su))?$/);
