@@ -163,18 +163,23 @@ input { font-family: inherit; }
 .icon-btn:active { background: var(--surface-veil); }
 
 .status-pill {
-  pointer-events: auto;
-  flex-shrink: 0;
-  font-size: 12px;
+  pointer-events: none;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 46vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
   font-family: var(--font-mono);
   padding: 6px 10px;
   border-radius: var(--radius-s);
-  background: var(--navy-900);
-  color: var(--chart-100);
-  white-space: nowrap;
+  background: var(--surface-veil);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
 }
-.status-pill[data-tone="offline"] { background: var(--red-500); color: white; }
-.status-pill[data-tone="loading"] { background: var(--navy-800); }
+.status-pill[data-tone="offline"] { background: rgba(224, 72, 62, 0.15); color: var(--red-500); border-color: rgba(224, 72, 62, 0.3); }
+.status-pill[data-tone="loading"] { background: var(--surface-veil); color: var(--text-secondary); }
 
 .search-results {
   position: absolute;
