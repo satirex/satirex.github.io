@@ -646,6 +646,7 @@ input { font-family: inherit; }
 }
 
 .onboarding[hidden],
-.install-banner[hidden] {
+.install-banner[hidden],
+.status-pill[hidden] {
   display: none;
 }
