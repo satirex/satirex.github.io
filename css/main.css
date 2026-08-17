@@ -326,14 +326,25 @@ input { font-family: inherit; }
 
 .sheet__header {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 4px 20px 10px;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 10px 20px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--border);
 }
+.sheet__header h2 { flex: 1; min-width: 0; }
 .sheet__header h2 { font-size: 17px; }
 .sheet__count { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+
+.sheet__toggle {
+  margin-left: auto;
+  color: var(--text-secondary);
+  transition: transform 220ms ease;
+}
+.sheet[data-state="peek"] .sheet__toggle .icon { transform: rotate(0deg); }
+.sheet[data-state="half"] .sheet__toggle .icon,
+.sheet[data-state="full"] .sheet__toggle .icon { transform: rotate(180deg); }
+.sheet__toggle .icon { transition: transform 220ms ease; }
 
 .sheet__body {
   flex: 1;
