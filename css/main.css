@@ -244,7 +244,7 @@ input { font-family: inherit; }
   opacity: 0.35;
 }
 
-.chip.is-active { color: var(--surface); }
+.chip.is-active { color: var(--chart-050); }
 .chip--supermarket.is-active { background: var(--teal-500); border-color: var(--teal-500); }
 .chip--fuel.is-active { background: var(--amber-500); border-color: var(--amber-500); color: var(--ink-900); }
 .chip--open.is-active { background: var(--navy-900); border-color: var(--navy-900); }
