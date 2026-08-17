@@ -62,7 +62,7 @@ async function loadForBbox(bbox) {
   const isFresh = Date.now() - lastFetch < CACHE.staleAfterMs;
   if (isFresh) return; // wir haben diese Region kürzlich schon geladen
 
-  setStatusPill("Aktualisiere Umgebung …", "loading");
+  setStatusPill("Aktualisiere…", "loading");
   try {
     const fresh = await fetchPois(bbox);
     upsertPois(fresh);
@@ -73,7 +73,7 @@ async function loadForBbox(bbox) {
     renderSheetForView();
   } catch (err) {
     console.warn("Overpass-Fehler", err);
-    setStatusPill("Offline – zeige gespeicherte Daten", "offline");
+    setStatusPill("Offline", "offline");
     setTimeout(() => setStatusPill(null), 4000);
   }
 }
