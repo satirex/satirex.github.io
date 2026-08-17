@@ -4,7 +4,6 @@
 
 import { CATEGORIES } from "./config.js";
 import { formatDistance, distanceMeters } from "./geolocation.js";
-import { isOpenNow } from "./overpass.js";
 import { isOpenNow, humanizeOpeningHours } from "./overpass.js";
 
 const $ = (sel) => document.querySelector(sel);
