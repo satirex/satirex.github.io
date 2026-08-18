@@ -276,11 +276,32 @@ export function setStatusPill(text, tone) {
   el.dataset.tone = tone || "";
 }
 
+// Diese Chip-Paare schließen sich gegenseitig aus: Aktivieren des einen
+// deaktiviert automatisch das andere ("Alle X" vs. "Bekannte X"). Beide
+// lassen sich weiterhin unabhängig ausschalten, um die Kategorie ganz
+// auszublenden.
+const EXCLUSIVE_CHIP_PAIRS = [
+  ["supermarket", "known-supermarket"],
+  ["fuel", "known-fuel"],
+];
+
 export function bindChips(onChange) {
   const chips = document.querySelectorAll(".chip");
+  const chipByFilter = new Map();
+  chips.forEach((c) => chipByFilter.set(c.dataset.filter, c));
+
   chips.forEach((chip) => {
     chip.addEventListener("click", () => {
+      const becomingActive = !chip.classList.contains("is-active");
       chip.classList.toggle("is-active");
+
+      if (becomingActive) {
+        for (const [a, b] of EXCLUSIVE_CHIP_PAIRS) {
+          if (chip.dataset.filter === a) chipByFilter.get(b)?.classList.remove("is-active");
+          if (chip.dataset.filter === b) chipByFilter.get(a)?.classList.remove("is-active");
+        }
+      }
+
       const active = {};
       chips.forEach((c) => (active[c.dataset.filter] = c.classList.contains("is-active")));
       onChange(active);
