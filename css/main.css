@@ -46,7 +46,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --topbar-h: 60px;
   --chipbar-h: 44px;
-   --sheet-offset: 128px;
+  --sheet-offset: 128px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -58,6 +58,26 @@
     --text-secondary: #9db2c8;
     --border: rgba(255, 255, 255, 0.1);
   }
+}
+
+/* Manuelle Übersteuerung des Farbschemas über das Menü (Punkt "Darstellung").
+   Höhere Spezifität als die reine Media Query oben, damit z. B. "Hell"
+   auch bei dunklem Systemschema greift, und umgekehrt. */
+:root[data-theme="dark"] {
+  --bg: var(--navy-950);
+  --surface: #0f2137;
+  --surface-veil: rgba(255, 255, 255, 0.06);
+  --text-primary: #eef3f8;
+  --text-secondary: #9db2c8;
+  --border: rgba(255, 255, 255, 0.1);
+}
+:root[data-theme="light"] {
+  --bg: var(--chart-050);
+  --surface: #ffffff;
+  --surface-veil: rgba(11, 37, 69, 0.06);
+  --text-primary: var(--ink-900);
+  --text-secondary: #56626f;
+  --border: rgba(11, 37, 69, 0.12);
 }
 
 * { box-sizing: border-box; }
@@ -295,7 +315,7 @@ input { font-family: inherit; }
   height: 48px;
   border-radius: 50%;
   background: var(--surface);
-  color: var(--text-primary);   /* vorher: var(--navy-900) */
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -489,6 +509,117 @@ input { font-family: inherit; }
 .btn--full { width: 100%; }
 
 /* ==========================================================================
+   Einstellungsmenü
+   ========================================================================== */
+
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1180;
+  background: rgba(6, 22, 39, 0.55);
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+/* display nur setzen, wenn NICHT hidden – vermeidet den [hidden]-Konflikt,
+   den wir bei anderen Overlays nachträglich reparieren mussten. */
+.menu-overlay:not([hidden]) { display: flex; }
+
+.menu-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: min(84vh, 640px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 20px 20px 0 0;
+  padding: 6px 20px calc(24px + var(--safe-bottom));
+  box-shadow: 0 -8px 30px hsl(var(--shadow-color) / 0.3);
+}
+@media (min-width: 560px) {
+  .menu-overlay { align-items: center; padding: 24px; }
+  .menu-card { border-radius: var(--radius-l); max-height: 84vh; }
+}
+
+.menu-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 6px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+.menu-card__header h2 { font-size: 18px; }
+
+.menu-section {
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.menu-section:first-of-type { border-top: none; }
+.menu-section h3 {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+.menu-section__hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: -4px 0 10px;
+  line-height: 1.4;
+}
+.menu-section__text {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+.menu-section__text a { color: var(--teal-600); }
+
+.segmented {
+  display: flex;
+  background: var(--bg);
+  border-radius: var(--radius-m);
+  padding: 4px;
+  gap: 4px;
+}
+.segmented__option {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: calc(var(--radius-m) - 4px);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+.segmented__option.is-active {
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px hsl(var(--shadow-color) / 0.18);
+}
+
+.fuel-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.fuel-chip {
+  padding: 8px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.fuel-chip.is-active {
+  background: var(--amber-500);
+  border-color: var(--amber-500);
+  color: var(--ink-900);
+}
+
+/* ==========================================================================
    Onboarding
    ========================================================================== */
 
@@ -644,6 +775,13 @@ input { font-family: inherit; }
 @media (max-width: 340px) {
   .chip { padding: 7px 11px; font-size: 12.5px; }
 }
+
+/* ==========================================================================
+   [hidden]-Overrides
+   Einige Komponenten setzen "display: flex" direkt auf der Basisklasse.
+   Bei gleicher Spezifität schlägt das die UA-Regel [hidden]{display:none}
+   (Quellreihenfolge entscheidet) – darum hier explizit erzwingen.
+   ========================================================================== */
 
 .onboarding[hidden],
 .install-banner[hidden],
