@@ -3,7 +3,7 @@
 // <-> Bottom Sheet. Bewusst ohne Framework – bei dieser Größe reicht ein
 // simpler, expliziter State-Objekt völlig aus und bleibt gut lesbar.
 
-import { CATEGORIES, CACHE } from "./config.js";
+import { CATEGORIES, CACHE, isKnownChain } from "./config.js";
 import { PoiMap } from "./map.js";
 import { fetchPois } from "./overpass.js";
 import { savePois, getAllPois, setRegionFetchedAt, getRegionFetchedAt, pruneStale } from "./db.js";
@@ -16,7 +16,7 @@ const $ = (sel) => document.querySelector(sel);
 
 const state = {
   poisById: new Map(), // id -> poi (alle je geladenen POIs, Quelle der Wahrheit)
-  filters: { supermarket: true, fuel: true, "open-now": false },
+    filters: { supermarket: true, fuel: true, "open-now": false, "known-supermarket": false, "known-fuel": false },
   fuelTypeFilter: new Set(), // leer = alle Kraftstoffarten
   userPos: null,
   selectedPoi: null,
@@ -85,14 +85,27 @@ async function loadForBbox(bbox, force = false) {
  * Rendering
  * ---------------------------------------------------------------------- */
 
+function categoryVisible(catId) {
+  return !!state.filters[catId] || !!state.filters[`known-${catId}`];
+}
+
 function activeCategories() {
-  return Object.keys(CATEGORIES).filter((id) => state.filters[id]);
+  return Object.keys(CATEGORIES).filter((id) => categoryVisible(id));
+}
+
+/** Ob ein einzelner POI durchgelassen wird: uneingeschränkt, wenn "Alle X"
+ *  aktiv ist; sonst nur, wenn "Bekannte X" aktiv ist UND der Ort zu einer
+ *  der großen Ketten gehört. */
+function passesChainFilter(poi) {
+  if (state.filters[poi.category]) return true;
+  if (state.filters[`known-${poi.category}`]) return isKnownChain(poi);
+  return false;
 }
 
 function filteredPois() {
   const cats = new Set(activeCategories());
   const wantOpenOnly = !!state.filters["open-now"];
-  let all = Array.from(state.poisById.values()).filter((p) => cats.has(p.category));
+    let all = Array.from(state.poisById.values()).filter((p) => cats.has(p.category) && passesChainFilter(p));
   if (wantOpenOnly) {
     // Bei "jetzt geöffnet" nur eindeutig geschlossene Orte ausblenden;
     // unbekannte Öffnungszeiten bleiben sichtbar statt fälschlich zu verschwinden.
@@ -113,7 +126,7 @@ function poiOpenState(poi) {
 
 function renderMarkers() {
   for (const catId of Object.keys(CATEGORIES)) {
-    const visible = !!state.filters[catId];
+    const visible = categoryVisible(catId);
     map.setCategoryVisible(catId, visible);
     if (!visible) continue;
     const list = filteredPois().filter((p) => p.category === catId);
