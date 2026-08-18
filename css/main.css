@@ -17,6 +17,7 @@
   --chart-050: #faf8f2;
   --teal-500: #1b998b;
   --teal-600: #157e73;
+   --green-500: #22c55e;
   --amber-500: #ffb100;
   --amber-600: #e39900;
   --red-500: #e0483e;
@@ -292,7 +293,7 @@ input { font-family: inherit; }
 .chip--supermarket.is-active { background: var(--teal-500); border-color: var(--teal-500); }
 .chip--fuel.is-active { background: var(--amber-500); border-color: var(--amber-500); color: var(--ink-900); }
 .chip--open.is-active { background: var(--navy-900); border-color: var(--navy-900); }
-.chip.is-active .chip__dot { background: var(--teal-500); }
+.chip.is-active .chip__dot { background: var(--green-500); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.55); }
 
 /* ==========================================================================
    Floating action buttons
