@@ -17,6 +17,7 @@ const $ = (sel) => document.querySelector(sel);
 const state = {
   poisById: new Map(), // id -> poi (alle je geladenen POIs, Quelle der Wahrheit)
   filters: { supermarket: true, fuel: true, "open-now": false },
+  fuelTypeFilter: new Set(), // leer = alle Kraftstoffarten
   userPos: null,
   selectedPoi: null,
   view: "list", // "list" | "detail"
@@ -53,16 +54,18 @@ async function loadFromCacheFirst() {
   }
 }
 
-async function loadForBbox(bbox) {
+async function loadForBbox(bbox, force = false) {
   const key = regionKeyFor(bbox);
-  if (key === state.lastBboxKey) return;
+  if (!force && key === state.lastBboxKey) return;
   state.lastBboxKey = key;
 
-  const lastFetch = await getRegionFetchedAt(key).catch(() => 0);
-  const isFresh = Date.now() - lastFetch < CACHE.staleAfterMs;
-  if (isFresh) return; // wir haben diese Region kürzlich schon geladen
+  if (!force) {
+    const lastFetch = await getRegionFetchedAt(key).catch(() => 0);
+    const isFresh = Date.now() - lastFetch < CACHE.staleAfterMs;
+    if (isFresh) return; // wir haben diese Region kürzlich schon geladen
+  }
 
-  setStatusPill("Aktualisiere…", "loading");
+  setStatusPill("Aktualisiere …", "loading");
   try {
     const fresh = await fetchPois(bbox);
     upsertPois(fresh);
@@ -89,14 +92,18 @@ function activeCategories() {
 function filteredPois() {
   const cats = new Set(activeCategories());
   const wantOpenOnly = !!state.filters["open-now"];
-  const all = Array.from(state.poisById.values()).filter((p) => cats.has(p.category));
-  if (!wantOpenOnly) return all;
-  return all.filter((p) => {
+  let all = Array.from(state.poisById.values()).filter((p) => cats.has(p.category));
+  if (wantOpenOnly) {
     // Bei "jetzt geöffnet" nur eindeutig geschlossene Orte ausblenden;
     // unbekannte Öffnungszeiten bleiben sichtbar statt fälschlich zu verschwinden.
-    const openState = poiOpenState(p);
-    return openState !== false;
-  });
+    all = all.filter((p) => poiOpenState(p) !== false);
+  }
+  if (state.fuelTypeFilter.size) {
+    all = all.filter(
+      (p) => p.category !== "fuel" || (p.fuelTypes && p.fuelTypes.some((t) => state.fuelTypeFilter.has(t)))
+    );
+  }
+  return all;
 }
 
 function poiOpenState(poi) {
@@ -288,10 +295,82 @@ function applyShortcutFilter() {
 
 function initFabs() {
   $("#fab-locate").addEventListener("click", () => requestUserLocation({ fly: true }));
-  $("#fab-list").addEventListener("click", () => {
-    state.view = "list";
-    renderSheetForView();
-    sheet.setState(sheet.state === "peek" ? "half" : "peek");
+}
+
+function initMenu() {
+  const overlay = $("#menu-overlay");
+  const openBtn = $("#fab-menu");
+  const closeBtn = $("#menu-close");
+
+  const open = () => (overlay.hidden = false);
+  const close = () => (overlay.hidden = true);
+  openBtn.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close(); // Klick auf den Hintergrund schließt
+  });
+
+  initThemeSwitch();
+  initFuelFilter();
+
+  $("#menu-refresh").addEventListener("click", async () => {
+    const bbox = map.getBounds();
+    if (!bbox) {
+      showToast("Bitte etwas näher heranzoomen.");
+      return;
+    }
+    close();
+    setStatusPill("Aktualisiere …", "loading");
+    try {
+      const fresh = await fetchPois(bbox);
+      upsertPois(fresh);
+      await savePois(fresh);
+      await setRegionFetchedAt(regionKeyFor(bbox));
+      setStatusPill(null);
+      renderMarkers();
+      renderSheetForView();
+      showToast("Daten aktualisiert");
+    } catch (err) {
+      console.warn("Overpass-Fehler (manueller Refresh)", err);
+      setStatusPill("Kartendaten nicht erreichbar", "offline");
+      setTimeout(() => setStatusPill(null), 4000);
+    }
+  });
+}
+
+/** Merkt sich die Theme-Wahl (System/Hell/Dunkel) in localStorage und
+ *  wendet sie über das data-theme-Attribut an, das die CSS-Overrides in
+ *  main.css greifen lässt. */
+function initThemeSwitch() {
+  const buttons = document.querySelectorAll("#theme-segmented .segmented__option");
+  const stored = localStorage.getItem("hh-theme") || "system";
+
+  const apply = (theme) => {
+    if (theme === "system") document.documentElement.removeAttribute("data-theme");
+    else document.documentElement.setAttribute("data-theme", theme);
+    buttons.forEach((b) => b.classList.toggle("is-active", b.dataset.theme === theme));
+  };
+
+  apply(stored);
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      localStorage.setItem("hh-theme", btn.dataset.theme);
+      apply(btn.dataset.theme);
+    });
+  });
+}
+
+function initFuelFilter() {
+  const chips = document.querySelectorAll("#fuel-filter .fuel-chip");
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const fuel = chip.dataset.fuel;
+      if (state.fuelTypeFilter.has(fuel)) state.fuelTypeFilter.delete(fuel);
+      else state.fuelTypeFilter.add(fuel);
+      chip.classList.toggle("is-active");
+      renderMarkers();
+      renderSheetForView();
+    });
   });
 }
 
@@ -330,6 +409,7 @@ async function main() {
   initChips();
   applyShortcutFilter();
   initFabs();
+  initMenu();
 
   await loadFromCacheFirst();
 
