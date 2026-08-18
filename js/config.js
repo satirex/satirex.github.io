@@ -73,3 +73,21 @@ export const FETCH_TIMEOUT_MS = 12000;
 // Ab diesem Zoom werden überhaupt POIs geladen (verhindert riesige
 // Overpass-Anfragen bei weit rausgezoomter Karte).
 export const MIN_ZOOM_FOR_DATA = 12;
+
+// Für die Filter "Bekannte Supermärkte" / "Bekannte Tankstellen": grobe,
+// bewusst nicht abschließende Liste der großen, bundesweit (bzw. in
+// Norddeutschland) verbreiteten Ketten. Kleingeschrieben, da der Abgleich
+// case-insensitive gegen brand- und name-Tag läuft (Teilstring-Suche, damit
+// z. B. auch "REWE To Go" oder "TotalEnergies" erfasst werden).
+export const KNOWN_CHAINS = {
+  supermarket: ["edeka", "rewe", "aldi", "lidl", "penny", "netto", "kaufland", "famila", "combi", "sky"],
+  fuel: ["aral", "shell", "esso", "total", "jet", "star", "hem", "avia"],
+};
+
+/** Prüft, ob ein POI zu einer der großen, bekannten Ketten seiner Kategorie gehört. */
+export function isKnownChain(poi) {
+  const list = KNOWN_CHAINS[poi.category];
+  if (!list) return false;
+  const haystack = `${poi.brand || ""} ${poi.name || ""}`.toLowerCase();
+  return list.some((brand) => haystack.includes(brand));
+}
