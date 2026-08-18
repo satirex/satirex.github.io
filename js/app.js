@@ -324,6 +324,7 @@ function initMenu() {
   });
 
   initThemeSwitch();
+  initMapStyleSwitch();
   initFuelFilter();
 
   $("#menu-refresh").addEventListener("click", async () => {
@@ -369,6 +370,26 @@ function initThemeSwitch() {
     btn.addEventListener("click", () => {
       localStorage.setItem("hh-theme", btn.dataset.theme);
       apply(btn.dataset.theme);
+    });
+  });
+}
+
+/** Merkt sich die Kartenansicht (Standard/Satellit) in localStorage,
+ *  analog zur Theme-Wahl. */
+function initMapStyleSwitch() {
+  const buttons = document.querySelectorAll("#mapstyle-segmented .segmented__option");
+  const stored = localStorage.getItem("hh-mapstyle") || "standard";
+
+  const apply = (style) => {
+    map.setBaseLayer(style);
+    buttons.forEach((b) => b.classList.toggle("is-active", b.dataset.mapstyle === style));
+  };
+
+  apply(stored);
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      localStorage.setItem("hh-mapstyle", btn.dataset.mapstyle);
+      apply(btn.dataset.mapstyle);
     });
   });
 }
