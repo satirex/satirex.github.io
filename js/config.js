@@ -26,6 +26,14 @@ export const TILE_LAYER = {
   subdomains: ["a", "b", "c"],
 };
 
+export const SATELLITE_TILE_LAYER = {
+  // Esri World Imagery – ebenfalls kostenlos ohne API-Key nutzbar,
+  // Attribution ist Pflicht.
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  attribution:
+    'Satellitenbilder: &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics',
+};
+
 export const CATEGORIES = {
   supermarket: {
     id: "supermarket",
