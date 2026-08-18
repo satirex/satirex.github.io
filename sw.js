@@ -83,8 +83,8 @@ async function trimCache(cacheName, maxEntries) {
 }
 
 function isTileRequest(url) {
-  return /tile\.openstreetmap\.org|\.tile\.openstreetmap\.org|basemaps\.cartocdn\.com/.test(url.host + url.pathname) ||
-         /\/\d+\/\d+\/\d+\.png$/.test(url.pathname);
+  return /tile\.openstreetmap\.org|\.tile\.openstreetmap\.org|basemaps\.cartocdn\.com|arcgisonline\.com/.test(url.host + url.pathname) ||
+         /\/\d+\/\d+\/\d+(\.png)?$/.test(url.pathname);
 }
 
 function isOverpassRequest(url) {
