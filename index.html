@@ -32,7 +32,7 @@
   <!-- App shell -->
   <div id="app">
 
-    <!-- Top bar: search + status -->
+    <!-- Top bar: search -->
     <header class="topbar" id="topbar">
       <div class="topbar__search">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm8 16-4.35-4.35" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -45,6 +45,10 @@
     </header>
 
     <ul id="search-results" class="search-results" hidden></ul>
+
+    <!-- Status: eigene, zentrierte Zeile unterhalb der Filter-Chips, damit
+         sie nicht mit der Suchleiste um Platz konkurriert und nie
+         abgeschnitten wird. -->
     <div id="status-pill" class="status-pill" hidden></div>
 
     <!-- Filter chips -->
@@ -69,9 +73,11 @@
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button id="fab-list" class="fab fab--secondary" aria-label="Liste anzeigen">
+      <button id="fab-menu" class="fab fab--secondary" aria-label="Menü öffnen">
         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="5" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="12" r="1.7" fill="currentColor"/>
+          <circle cx="12" cy="19" r="1.7" fill="currentColor"/>
         </svg>
       </button>
     </div>
@@ -90,6 +96,54 @@
         <!-- populated by ui.js -->
       </div>
     </section>
+
+    <!-- Einstellungen / Menü -->
+    <div id="menu-overlay" class="menu-overlay" hidden>
+      <div class="menu-card">
+        <div class="menu-card__header">
+          <h2>Einstellungen</h2>
+          <button id="menu-close" class="icon-btn" aria-label="Menü schließen">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+
+        <section class="menu-section">
+          <h3>Daten</h3>
+          <button id="menu-refresh" class="btn btn--ghost btn--full">Jetzt aktualisieren</button>
+        </section>
+
+        <section class="menu-section">
+          <h3>Darstellung</h3>
+          <div class="segmented" id="theme-segmented">
+            <button class="segmented__option" type="button" data-theme="system">System</button>
+            <button class="segmented__option" type="button" data-theme="light">Hell</button>
+            <button class="segmented__option" type="button" data-theme="dark">Dunkel</button>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <h3>Kraftstoff-Filter</h3>
+          <p class="menu-section__hint">Nur Tankstellen mit ausgewähltem Kraftstoff anzeigen. Keine Auswahl = alle.</p>
+          <div class="fuel-filter" id="fuel-filter">
+            <button class="fuel-chip" type="button" data-fuel="Diesel">Diesel</button>
+            <button class="fuel-chip" type="button" data-fuel="Super">Super</button>
+            <button class="fuel-chip" type="button" data-fuel="Super Plus">Super Plus</button>
+            <button class="fuel-chip" type="button" data-fuel="E85">E85</button>
+            <button class="fuel-chip" type="button" data-fuel="LPG">LPG</button>
+            <button class="fuel-chip" type="button" data-fuel="Laden">Laden</button>
+          </div>
+        </section>
+
+        <section class="menu-section">
+          <h3>Info</h3>
+          <p class="menu-section__text">
+            Alle Orte stammen live von
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkenden.
+            Ist ein Ort falsch oder veraltet? Öffne ihn in der Liste und nutze dort den Link „Auf OpenStreetMap ansehen“, um ihn direkt zu korrigieren.
+          </p>
+        </section>
+      </div>
+    </div>
 
     <!-- Onboarding / permission prompt -->
     <div id="onboarding" class="onboarding" hidden>
