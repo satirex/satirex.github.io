@@ -2,7 +2,7 @@
 // Leaflet-API direkt, sondern spricht nur mit diesem Modul – so bliebe ein
 // Wechsel der Kartenbibliothek später lokal begrenzt.
 
-import { HAMBURG, TILE_LAYER, CATEGORIES, MIN_ZOOM_FOR_DATA } from "./config.js";
+import { HAMBURG, TILE_LAYER, SATELLITE_TILE_LAYER, CATEGORIES, MIN_ZOOM_FOR_DATA } from "./config.js";
 
 const ICONS_SVG = {
   supermarket:
@@ -28,12 +28,21 @@ export class PoiMap {
       tap: true,
     });
 
-    L.tileLayer(TILE_LAYER.url, {
+      this.baseLayers = {
+    standard: L.tileLayer(TILE_LAYER.url, {
       attribution: TILE_LAYER.attribution,
       subdomains: TILE_LAYER.subdomains,
       maxZoom: HAMBURG.maxZoom,
       crossOrigin: true,
-    }).addTo(this.map);
+    }),
+    satellite: L.tileLayer(SATELLITE_TILE_LAYER.url, {
+      attribution: SATELLITE_TILE_LAYER.attribution,
+      maxZoom: HAMBURG.maxZoom,
+      crossOrigin: true,
+    }),
+  };
+  this.currentBaseLayer = "standard";
+  this.baseLayers.standard.addTo(this.map);
 
     this.clusterGroups = {};
     this.markersById = new Map();
@@ -156,6 +165,13 @@ export class PoiMap {
     if (this.map.getZoom() < MIN_ZOOM_FOR_DATA) return null;
     const b = this.map.getBounds();
     return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
+  }
+
+    setBaseLayer(kind) {
+    if (kind === this.currentBaseLayer || !this.baseLayers[kind]) return;
+    this.map.removeLayer(this.baseLayers[this.currentBaseLayer]);
+    this.baseLayers[kind].addTo(this.map);
+    this.currentBaseLayer = kind;
   }
 
   invalidateSize() {
