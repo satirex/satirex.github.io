@@ -152,6 +152,12 @@ export class PoiMap {
     return { lat: c.lat, lon: c.lng };
   }
 
+  getBounds() {
+    if (this.map.getZoom() < MIN_ZOOM_FOR_DATA) return null;
+    const b = this.map.getBounds();
+    return { south: b.getSouth(), west: b.getWest(), north: b.getNorth(), east: b.getEast() };
+  }
+
   invalidateSize() {
     this.map.invalidateSize();
   }
