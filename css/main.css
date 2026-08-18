@@ -365,9 +365,9 @@ input { font-family: inherit; }
   color: var(--text-secondary);
   transition: transform 220ms ease;
 }
-.sheet[data-state="peek"] .sheet__toggle .icon { transform: rotate(0deg); }
+.sheet[data-state="peek"] .sheet__toggle .icon { transform: rotate(180deg); }
 .sheet[data-state="half"] .sheet__toggle .icon,
-.sheet[data-state="full"] .sheet__toggle .icon { transform: rotate(180deg); }
+.sheet[data-state="full"] .sheet__toggle .icon { transform: rotate(0deg); }
 .sheet__toggle .icon { transition: transform 220ms ease; }
 
 .sheet__body {
