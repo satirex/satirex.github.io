@@ -283,17 +283,16 @@ input { font-family: inherit; }
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: currentColor;
-  opacity: 0.35;
+  background: var(--red-500);
+  box-shadow: 0 0 0 1px hsl(var(--shadow-color) / 0.15);
+  transition: background 120ms ease;
 }
 
 .chip.is-active { color: var(--chart-050); }
 .chip--supermarket.is-active { background: var(--teal-500); border-color: var(--teal-500); }
 .chip--fuel.is-active { background: var(--amber-500); border-color: var(--amber-500); color: var(--ink-900); }
 .chip--open.is-active { background: var(--navy-900); border-color: var(--navy-900); }
-.chip.is-active .chip__dot { opacity: 1; background: currentColor; }
-.chip--supermarket .chip__dot { color: var(--teal-500); }
-.chip--fuel .chip__dot { color: var(--amber-500); }
+.chip.is-active .chip__dot { background: var(--teal-500); }
 
 /* ==========================================================================
    Floating action buttons
