@@ -44,6 +44,9 @@ export class Sheet {
     this.onStateChange?.(state);
   }
 
+  /** Hält --sheet-offset (Basis für die FAB-Position) in Sync mit dem
+   *  aktuell sichtbaren Anteil der Leiste, damit die Buttons oberhalb
+   *  ihrer Kante mitwandern statt dahinter zu verschwinden. */
   _updateFabOffset() {
     const h = this.el.getBoundingClientRect().height;
     const translateByState = { full: 0, half: h * 0.38, peek: h - 128 - this._safeBottom() };
@@ -82,7 +85,6 @@ export class Sheet {
       const next = Math.min(Math.max(startTranslate + delta, 0), h);
       this.el.style.transform = `translateY(${next}px)`;
     };
-
     // touchmove muss preventDefault() aufrufen dürfen (daher passive:false),
     // sonst behandeln mobile Browser (Chrome/Firefox auf Android ebenso wie
     // Safari auf iOS) die vertikale Geste zusätzlich als Seiten-Scroll und
@@ -216,6 +218,7 @@ export function renderDetail({ poi, userPos, onBack }) {
       <div class="detail__actions">
         <a class="btn btn--primary" href="${mapsUrl}" target="_blank" rel="noopener">Route</a>
         ${telUrl ? `<a class="btn btn--ghost" href="${telUrl}">Anrufen</a>` : ""}
+        <a class="btn btn--ghost" href="https://www.openstreetmap.org/${poi.id}" target="_blank" rel="noopener">Auf OpenStreetMap ansehen</a>
       </div>
       <div class="detail__facts">
         <div class="detail__fact">
@@ -226,7 +229,7 @@ export function renderDetail({ poi, userPos, onBack }) {
           <div class="detail__fact-label">Entfernung</div>
           <div class="detail__fact-value">${dist != null ? formatDistance(dist) : "—"}</div>
         </div>
-       <div class="detail__fact">
+        <div class="detail__fact">
           <div class="detail__fact-label">Öffnungszeiten</div>
           <div class="detail__fact-value">${poi.openingHours ? escapeHtml(humanizeOpeningHours(poi.openingHours)) : "—"}</div>
         </div>
