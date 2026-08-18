@@ -1,151 +1,179 @@
-# Nahversorgung Hamburg — Supermärkte & Tankstellen (PWA)
+# Hamburg Nearby — Supermarkets & Gas Stations (PWA)
 
-Eine installierbare Progressive Web App, die Supermärkte und Tankstellen in
-Hamburg live auf einer interaktiven Karte anzeigt. Läuft im mobilen Browser
-(Android/Chrome, iOS/Safari) und lässt sich zum Startbildschirm hinzufügen.
+An installable Progressive Web App that shows supermarkets and gas stations
+in Hamburg live on an interactive map. Runs in the mobile browser
+(Android/Chrome, iOS/Safari) and can be added to the home screen.
 
-## Architektur
+## Architecture
 
-Kein Build-Schritt, kein Framework, kein Bundler — reines ES-Module-JavaScript,
-läuft direkt im Browser. Das hält die App leichtgewichtig, transparent und
-einfach zu erweitern.
+No build step, no framework, no bundler — plain ES-module JavaScript,
+runs directly in the browser. This keeps the app lightweight, transparent,
+and easy to extend.
 
 ```
-index.html            App-Shell (Markup), lädt Leaflet per CDN + eigene Module
-manifest.webmanifest   PWA-Manifest (Icons, Name, Standalone-Modus, Shortcuts)
-sw.js                  Service Worker: App-Shell-Cache + Laufzeit-Caching
-css/main.css            Design-Tokens & sämtliche Styles (mobile-first)
+index.html            App shell (markup), loads Leaflet via CDN + own modules
+manifest.webmanifest   PWA manifest (icons, name, standalone mode, shortcuts)
+sw.js                  Service worker: app-shell cache + runtime caching
+css/main.css            Design tokens & all styles (mobile-first)
 js/
-  config.js             Zentrale Konstanten (Hamburg-Grenzen, Kategorien, Endpunkte)
-  db.js                 IndexedDB-Wrapper für Offline-Cache der POI-Daten
-  overpass.js            Overpass-API-Client + POI-Normalisierung + opening_hours-Parser
-  geolocation.js          Geolocation-Wrapper, Distanzberechnung
-  search.js               Adresssuche über Nominatim
-  map.js                  Leaflet-Kapselung (Marker, Clustering, Standortpunkt)
-  ui.js                   Bottom Sheet, Listen-/Detailansicht, Chips, Toasts
-  pwa-install.js           Install-Prompt (Android) & Home-Bildschirm-Hinweis (iOS)
-  app.js                   Orchestrator: verdrahtet alle Module, hält den State
-icons/                  Generierte App-Icons (inkl. maskable + Apple Touch Icon)
+  config.js             Central constants (Hamburg bounds, categories, endpoints, known chains)
+  db.js                 IndexedDB wrapper for offline POI cache
+  overpass.js            Overpass API client + POI normalization + opening_hours parser/humanizer
+  geolocation.js          Geolocation wrapper, distance calculation
+  search.js               Address search via Nominatim
+  map.js                  Leaflet wrapper (markers, clustering, location dot, base-layer switching)
+  ui.js                   Bottom sheet, list/detail view, chips, toasts
+  pwa-install.js           Install prompt (Android) & home-screen hint (iOS)
+  app.js                   Orchestrator: wires up all modules, holds app state
+icons/                  Generated app icons (incl. maskable + Apple touch icon)
 ```
 
-**Datenfluss:** Beim Bewegen der Karte wird ein Bounding Box an Overpass
-geschickt (POIs für Supermärkte & Tankstellen), Ergebnisse werden im
-State gehalten, in IndexedDB gesichert (Offline-Fallback) und als Marker /
-Liste gerendert. Bereits geladene Regionen werden 6 Stunden lang nicht erneut
-abgefragt (`CACHE.staleAfterMs` in `config.js`), zwischengespeicherte Daten
-verfallen nach 7 Tagen.
+**Data flow:** As the map moves, a bounding box is sent to Overpass (POIs for
+supermarkets & gas stations), results are kept in app state, persisted to
+IndexedDB (offline fallback), and rendered as markers/list. Already-loaded
+regions aren't re-fetched for 6 hours (`CACHE.staleAfterMs` in `config.js`);
+cached data expires after 7 days. The settings menu also offers a manual
+"refresh now" action that bypasses this staleness check for the currently
+visible area.
 
-**Warum kein Framework?** Bei diesem Funktionsumfang (eine Karte, eine Liste,
-ein paar Filter) bringt React/Vue nur Build-Komplexität ohne echten Nutzen.
-Die klare Modultrennung (Karte / Daten / UI / Standort) hält den Code trotzdem
-wartbar und lässt sich bei Bedarf leicht in ein Framework migrieren.
+**Why no framework?** At this scope (a map, a list, a handful of filters),
+React/Vue would add build complexity without real benefit. The clear module
+separation (map / data / UI / location) keeps the code maintainable and
+would make a later migration to a framework straightforward if ever needed.
 
-## Datenquellen
+## Data sources
 
-- **Kartenkacheln:** OpenStreetMap-Standardkacheln (kostenlos, kein API-Key)
-- **POI-Daten:** [Overpass API](https://overpass-api.de/) (OSM-Rohdaten für
-  `shop=supermarket`, `shop=convenience`, `amenity=fuel`), mit automatischem
-  Failover auf zwei weitere öffentliche Overpass-Spiegel
-- **Adresssuche:** [Nominatim](https://nominatim.org/) (OSM-Geocoding),
-  auf die Hamburger Bounding Box eingegrenzt
+- **Map tiles:** Standard OpenStreetMap tiles (free, no API key), with an
+  optional satellite view via Esri World Imagery (also free, no API key)
+- **POI data:** [Overpass API](https://overpass-api.de/) (raw OSM data for
+  `shop=supermarket`, `shop=convenience`, `amenity=fuel`), with automatic
+  failover across two additional public Overpass mirrors. Non-public
+  locations (tagged `access=private`/`no`/`customers` — e.g. company depot
+  fuel pumps) are filtered out.
+- **Address search:** [Nominatim](https://nominatim.org/) (OSM geocoding),
+  scoped to the Hamburg bounding box
 
-Alle drei sind kostenlose öffentliche Dienste ohne Registrierung. Für
-Produktivbetrieb mit höherem Traffic empfiehlt sich ein eigener Overpass-/
-Nominatim-Server oder ein kommerzieller Anbieter (siehe unten, "Skalierung").
+All of these are free public services requiring no registration. For
+production use with significant traffic, consider running your own
+Overpass/Nominatim instance or a commercial provider.
 
-## Lokal testen
+## Running locally
 
-Da Service Worker (und Geolocation) einen "secure context" brauchen, reicht
-ein einfacher HTTP-Server auf `localhost` (gilt als sicher):
+Since service workers (and geolocation) require a secure context, a plain
+HTTP server on `localhost` is enough (counts as secure):
 
 ```bash
 cd hamburg-poi-pwa
 python3 -m http.server 8080
-# dann im Browser: http://localhost:8080
+# then open http://localhost:8080
 ```
 
-Für einen Test auf dem echten Smartphone im selben WLAN:
+To test on an actual phone on the same Wi-Fi:
 
 ```bash
 python3 -m http.server 8080 --bind 0.0.0.0
-# auf dem Handy: http://<Rechner-IP>:8080
+# on the phone: http://<computer-ip>:8080
 ```
 
-Achtung: Ohne HTTPS funktioniert das **nur** für den lokalen Test. Für die
-Installation als Homescreen-App braucht es echtes HTTPS (siehe Deployment).
+Note: without HTTPS this only works for local testing. Installing as a
+home-screen app requires real HTTPS (see Deployment).
 
 ## Deployment
 
-Die App besteht nur aus statischen Dateien — jeder Static-Host mit HTTPS
-funktioniert (z. B. Netlify, Vercel, GitHub Pages, Cloudflare Pages, ein
-eigener nginx mit Let's-Encrypt-Zertifikat). Einfach den kompletten Ordner
-hochladen. Wichtig:
+The app is just static files — any static host with HTTPS works (e.g.
+Netlify, Vercel, GitHub Pages, Cloudflare Pages, or your own nginx with a
+Let's Encrypt certificate). Just upload the whole folder. Important:
 
-- HTTPS ist Pflicht (PWA-Installation und Geolocation verlangen es)
-- Bei Deployment in einem Unterordner (z. B. `/nahversorgung/`) funktionieren
-  alle Pfade unverändert, da durchgängig relative Pfade verwendet werden
+- HTTPS is required (PWA installation and geolocation both need it)
+- All paths are relative, so deploying into a subfolder (e.g.
+  `/nahversorgung/`) works without any changes
+- If deploying to GitHub Pages, add an empty `.nojekyll` file at the repo
+  root — otherwise GitHub's default Jekyll processing can interfere with
+  plain static asset folders
 
-## Installation auf dem Smartphone
+## Installing on a phone
 
-**Android (Chrome):** Beim Öffnen erscheint nach kurzer Zeit automatisch ein
-Banner "App installieren". Alternativ über das Chrome-Menü ⋮ → "App
-installieren".
+**Android (Chrome/Firefox):** An "Install app" banner usually appears
+automatically shortly after opening. Alternatively, use the browser menu →
+"Install app".
 
-**iPhone (Safari):** iOS unterstützt kein automatisches Install-Prompt. Die
-App zeigt daher einen Hinweis: Teilen-Symbol ⬆️ antippen → "Zum
-Home-Bildschirm". Danach startet die App im Vollbildmodus ohne Safari-Leiste,
-inkl. eigenem App-Icon.
+**iPhone (Safari):** iOS doesn't support an automatic install prompt. The
+app shows a hint instead: tap the Share icon ⬆️ → "Add to Home Screen".
+The app then launches full-screen without the Safari chrome, with its own
+icon.
 
-## Funktionsumfang
+## Features
 
-- Live-Karte mit geclusterten Markern für Supermärkte (grün) und Tankstellen
-  (bernstein) – Farbwahl angelehnt an nautische Betonnung, passend zur
-  Hafenstadt Hamburg
-- Bottom Sheet im drei-stufigen "peek / half / full"-Verhalten (wie native
-  Karten-Apps), per Wisch- oder Ziehgeste bedienbar
-- Liste sortiert nach Entfernung zum eigenen Standort (falls freigegeben),
-  sonst zum Kartenmittelpunkt
-- Detailansicht je Ort: Adresse, Öffnungsstatus (aus OSM `opening_hours`
-  ausgewertet), Distanz, Route (öffnet OSM-Routenplaner), Anruf-Button,
-  bei Tankstellen die verfügbaren Kraftstoffarten
-- Filter-Chips: Supermärkte, Tankstellen, "Jetzt geöffnet"
-- Adresssuche (Nominatim), auf Hamburg eingegrenzt
-- Standortanzeige mit Genauigkeitsradius, "Locate me"-FAB
-- App-Shortcuts (Android: langes Drücken auf das Icon) direkt zu "nächste
-  Tankstelle" / "nächster Supermarkt"
-- Offline-fähig: App-Shell, zuletzt geladene Kartenkacheln und POI-Daten
-  bleiben ohne Netz nutzbar; Statusanzeige informiert bei fehlender Verbindung
-- Dark Mode folgt automatisch den Systemeinstellungen
-- Safe-Area-Insets für iPhones mit Notch/Dynamic Island
+- Live map with clustered markers for supermarkets (teal) and gas stations
+  (amber) — color choice inspired by nautical buoyage marks, fitting for a
+  harbor city like Hamburg
+- Bottom sheet with a three-state "peek / half / full" behavior (like
+  native map apps), operable by swipe/drag or via an explicit toggle button
+  in its header (for mouse/desktop use)
+- List sorted by distance to the user's location (if granted), otherwise to
+  the map center
+- Detail view per place: address, open/closed status (evaluated from OSM
+  `opening_hours`, shown in a human-readable German translation of the raw
+  syntax), distance, route (opens OSM's route planner), call button, a
+  direct "View on OpenStreetMap" link (so users can fix incorrect entries
+  at the source), and — for gas stations — the available fuel types
+- Filter chips: "All supermarkets" / "Known supermarkets" (major chains
+  only, e.g. Edeka, Rewe, Aldi, Lidl), "All gas stations" / "Known gas
+  stations" (major chains only, e.g. Aral, Shell, Esso), and "Open now".
+  The "All" and "Known" chip within each category are mutually exclusive;
+  both can still be switched off to hide the category entirely. Each chip
+  shows a red/green status dot to make its active state unambiguous at a
+  glance.
+- Settings menu (gear/kebab button): manual "refresh data now" (bypasses
+  the staleness cache), light/dark/system theme override, satellite map
+  view toggle, and a fuel-type filter (Diesel, Super, Super Plus, E85, LPG,
+  charging) — all persisted in `localStorage`
+- Address search (Nominatim), scoped to Hamburg
+- Location display with accuracy radius, "locate me" FAB
+- App shortcuts (Android: long-press the home-screen icon) straight to
+  "nearest gas station" / "nearest supermarket"
+- Offline-capable: app shell, last-loaded map tiles, and POI data remain
+  usable without a connection; a status indicator distinguishes "offline"
+  from "map data service unreachable" (e.g. Overpass rate-limited)
+- Dark mode follows system settings by default, with a manual override
+- Safe-area insets for iPhones with a notch/Dynamic Island
 
-## Bekannte Grenzen
+## Known limitations
 
-- Der `opening_hours`-Parser (`js/overpass.js`) deckt die gängigsten
-  OSM-Syntaxmuster ab (Wochentagsbereiche, einfache Zeitspannen, `24/7`),
-  aber keine Feiertagsregeln (`PH`/`SH`) oder saisonale Ausdrücke — in diesen
-  Fällen wird bewusst "unbekannt" statt eines geratenen Werts angezeigt.
-- Öffentliche Overpass-/Nominatim-Server sind fair-use-limitiert. Bei sehr
-  vielen gleichzeitigen Nutzer:innen empfiehlt sich ein eigener Overpass-
-  Server oder ein kommerzieller Anbieter.
-- POI-Datenqualität hängt von OpenStreetMap ab (crowd-gepflegt, i. d. R. sehr
-  gut in Hamburg, aber nicht garantiert vollständig/aktuell).
+- The `opening_hours` parser and humanizer (`js/overpass.js`) cover the
+  most common OSM syntax patterns (weekday ranges, simple time spans,
+  `24/7`, `PH`/`SH` closures), but not every possible expression — in
+  unsupported cases the app deliberately shows "unknown" rather than a
+  guessed value, and the raw text is left untouched rather than
+  mistranslated.
+- Public Overpass/Nominatim servers are fair-use rate-limited. Under heavy
+  concurrent usage, consider running a dedicated Overpass server or using a
+  commercial provider.
+- POI data quality depends on OpenStreetMap (crowd-maintained, generally
+  very good in Hamburg, but not guaranteed to be complete or up to date).
+- The "known chains" brand list (`KNOWN_CHAINS` in `js/config.js`) is a
+  curated, intentionally non-exhaustive set of major German chains —
+  regional or smaller chains won't show up under "Known X" even if
+  well-established locally.
 
-## Erweiterbarkeit
+## Extensibility
 
-Neue Kategorien (z. B. Bäckereien, Drogerien, Ladesäulen) hinzufügen:
+Adding a new category (e.g. bakeries, drugstores, EV charging stations):
 
-1. In `js/config.js` einen neuen Eintrag unter `CATEGORIES` mit passenden
-   `overpassSelectors` ergänzen
-2. In `js/map.js` ein Icon-SVG in `ICONS_SVG` ergänzen
-3. In `css/main.css` eine `.poi-marker--<kategorie>`-Farbe ergänzen
-4. Optional einen Filter-Chip in `index.html` ergänzen
+1. Add a new entry under `CATEGORIES` in `js/config.js` with matching
+   `overpassSelectors`
+2. Add an icon SVG to `ICONS_SVG` in `js/map.js`
+3. Add a `.poi-marker--<category>` color in `css/main.css`
+4. Optionally add a filter chip in `index.html`
 
-Der Rest der App (Laden, Cachen, Rendern, Detailansicht) funktioniert dank
-der generischen Kategorie-Struktur automatisch mit.
+The rest of the app (loading, caching, rendering, detail view) works
+automatically thanks to the generic category structure.
 
-## Lizenz der Kartendaten
+## Map data license
 
-© OpenStreetMap-Mitwirkende, veröffentlicht unter der [Open Database
-License](https://www.openstreetmap.org/copyright). Die Attribution ist fest
-in die Karte integriert (`css/main.css` / Leaflet-Attribution-Control) und
-darf nicht entfernt werden.
+© OpenStreetMap contributors, published under the [Open Database
+License](https://www.openstreetmap.org/copyright). Attribution is built
+into the map (`css/main.css` / Leaflet's attribution control) and must not
+be removed. Satellite imagery attribution (Esri, Maxar, Earthstar
+Geographics) is likewise built in and switches automatically with the map
+style.
