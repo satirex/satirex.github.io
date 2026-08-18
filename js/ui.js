@@ -196,6 +196,18 @@ export function renderList({ pois, userPos, onSelect, title, countLabel }) {
   body.appendChild(frag);
 }
 
+/** Öffnet die auf dem Gerät bereits installierte Navigations-App direkt mit
+ *  vorausgefülltem Ziel, statt nur eine Route auf einer Webseite zu zeigen:
+ *  Apple Maps auf iOS (dort ist Google Maps' Web-Link umständlicher), sonst
+ *  der universelle Google-Maps-Link (öffnet auf Android die App, falls
+ *  installiert, sonst die Web-Version). */
+function nativeNavigationUrl(lat, lon) {
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent || "");
+  return isIOS
+    ? `https://maps.apple.com/?daddr=${lat},${lon}&dirflg=d`
+    : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
+}
+
 export function renderDetail({ poi, userPos, onBack }) {
   const body = $("#sheet-body");
   $("#sheet-title").textContent = CATEGORIES[poi.category]?.label || "Ort";
@@ -204,7 +216,7 @@ export function renderDetail({ poi, userPos, onBack }) {
   const dist = userPos ? distanceMeters(userPos, { lat: poi.lat, lon: poi.lon }) : null;
   const open = isOpenNow(poi.openingHours);
   const openLabel = open === true ? "Geöffnet" : open === false ? "Geschlossen" : "Unbekannt";
-  const mapsUrl = `https://www.openstreetmap.org/directions?from=&to=${poi.lat}%2C${poi.lon}`;
+    const mapsUrl = nativeNavigationUrl(poi.lat, poi.lon);
   const telUrl = poi.phone ? `tel:${poi.phone.replace(/\s+/g, "")}` : null;
 
   body.innerHTML = `
@@ -216,7 +228,7 @@ export function renderDetail({ poi, userPos, onBack }) {
       <h3 class="detail__title">${escapeHtml(poi.name)}</h3>
       <p class="detail__subtitle">${poi.address ? escapeHtml(poi.address) : "Adresse nicht hinterlegt"}</p>
       <div class="detail__actions">
-        <a class="btn btn--primary" href="${mapsUrl}" target="_blank" rel="noopener">Route</a>
+        <a class="btn btn--primary" href="${mapsUrl}" target="_blank" rel="noopener">Navigation</a>
         ${telUrl ? `<a class="btn btn--ghost" href="${telUrl}">Anrufen</a>` : ""}
         <a class="btn btn--ghost" href="https://www.openstreetmap.org/${poi.id}" target="_blank" rel="noopener">Auf OpenStreetMap ansehen</a>
       </div>
